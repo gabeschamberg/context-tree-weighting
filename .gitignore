@@ -1,0 +1,17 @@
+*.pdf
+*.log
+*.aux
+*.fdb_latexmk
+*.fls
+*.run.xml
+*.synctex.gz
+*.blg
+*.bcf
+*.out
+__pycache__
+.ipynb_checkpoints
+*.pyc
+*-blx.bib
+*.bbl
+*.DS_Store
+data
