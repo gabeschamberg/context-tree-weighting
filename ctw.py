@@ -1,21 +1,22 @@
 import numpy as np
 
 class CTW:
-    def __init__(self,depth,symbols=2,sidesymbols=1):
+    def __init__(self,depth,symbols=2,sidesymbols=1,staleness=0):
         # tree depth
         self.D = depth
         # number of predicted symbols (for keeping counts)
         self.M = symbols
+        # number of recent sideinfo samples to ignore
+        self.K = staleness
         # number of symbols with side info (for contexts)
         self.Mtot = symbols*sidesymbols
-        # create list of all possible contexts to have
-        if sidesymbols == 1:
-            self.contexts = range(symbols)
-        else:
-            self.contexts = []
-            for x in range(symbols):
-                for y in range(sidesymbols):
-                    self.contexts.append((x,y))
+        # create list of "restricted" contexts (no side info)
+        self.rcontexts = range(symbols)
+        # create list of "complete" contexts (w/ side info)
+        self.ccontexts = []
+        for x in range(symbols):
+            for y in range(sidesymbols):
+                self.ccontexts.append((x,y))
         # keep track of leaf nodes
         self.leaves = {}
         # create root (which in turn creates tree)
@@ -43,7 +44,11 @@ class CTW:
         if sideseq is None:
             context = [seq[d] for d in reversed(range(self.D))]
         else:
-            context = [(seq[d],sideseq[d]) for d in reversed(range(self.D))]
+            ccontext = [(seq[d],sideseq[d]) for d in reversed(range(self.D))]
+            context = ccontext.copy()
+            if self.K > 0:
+                for k in range(self.K):
+                    context[k] = ccontext[k][0]
         # loop though samples
         for n,x in enumerate(seq[self.D:]):
             # update the appropriate nodes for current context
@@ -55,8 +60,12 @@ class CTW:
                 context.insert(0,x)
                 context = context[:self.D]
             else:
-                context.insert(0,(x,sideseq[n+self.D]))
-                context = context[:self.D]
+                ccontext.insert(0,(x,sideseq[n+self.D]))
+                ccontext = ccontext[:self.D]
+                context = ccontext.copy()
+                if self.K > 0:
+                    for k in range(self.K):
+                        context[k] = ccontext[k][0]
         return distributions
 
 class Node:
@@ -76,8 +85,16 @@ class Node:
         else:
             self.leaf = False
         if not self.leaf:
+            # if using side info, compare depth to staleness
+            if (self.ctw.Mtot > self.ctw.M) and \
+                        (len(self.context) >= self.ctw.K):
+                contexts = self.ctw.ccontexts
+            # otherwise just create context based on symbols
+            else:
+                contexts = self.ctw.rcontexts
+            # create all the children
             self.children = []
-            for c in self.ctw.contexts:
+            for c in contexts:
                 self.children.append(Node(
                         ctw=ctw,
                         context=context+[c],
