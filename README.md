@@ -5,4 +5,6 @@ For more on context tree weighting see this [paper](http://citeseerx.ist.psu.edu
 
 For a description of the efficient updating implementation see Chapter 5 of this [follow up paper](https://www.sps.tue.nl/wp-content/uploads/2015/09/WillemsTjalkens1997eidma.pdf)
 
+For more information about CTW with stale side information see this [paper](https://arxiv.org/pdf/1810.05250.pdf)
+
 For a Matlab implementation that provided much guidance see [here](https://github.com/EEthinker/Universal_directed_information)
